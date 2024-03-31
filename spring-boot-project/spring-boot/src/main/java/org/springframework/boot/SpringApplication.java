@@ -268,8 +268,11 @@ public class SpringApplication {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+		// 设置当前的 web 应用类型，REACTIVE，NONE，SERVLET
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
+		// 设置初始化器，getSpringFactoriesInstances：从 META-INF/spring.factories 中获取配置
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+		// 设置监听器，getSpringFactoriesInstances：从 META-INF/spring.factories 中获取配置
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
@@ -296,29 +299,42 @@ public class SpringApplication {
 	 * @return a running {@link ApplicationContext}
 	 */
 	public ConfigurableApplicationContext run(String... args) {
+		// 1. 创建 StopWatch 实例，其实就是个计时器，用来统计springboot启动耗时
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		ConfigurableApplicationContext context = null;
 		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
+		// 2. 配置一个系统属性：java.awt.headless，java.awt.headless模式是系统的一种配置模式
 		configureHeadlessProperty();
+		// 3. 获取监听器，也是从 META-INF/spring.factories 中获取
 		SpringApplicationRunListeners listeners = getRunListeners(args);
+		// 4. 发布事件
 		listeners.starting();
 		try {
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+			// 5. 处理环境参数
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
+			// 6. 如果有配置 spring.beaninfo.ignore，则将该配置设置进系统参数
 			configureIgnoreBeanInfo(environment);
+			// 7. 打印banner
 			Banner printedBanner = printBanner(environment);
+			// 8. 创建applicationContext，根据不同的应用类型创建不同的容器
 			context = createApplicationContext();
 			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class,
 					new Class[] { ConfigurableApplicationContext.class }, context);
+			// 9. 准备上下文，设置了一系列的属性值
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+			// 10. 调用 AbstractApplicationContext.refresh，启动spring容器
 			refreshContext(context);
+			// 11. 刷新后的处理
 			afterRefresh(context, applicationArguments);
 			stopWatch.stop();
 			if (this.logStartupInfo) {
 				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);
 			}
+			// 12. 发布事件
 			listeners.started(context);
+			// 13. 调用 runner，实现了 ApplicationRunner或CommandLineRunner 的接口
 			callRunners(context, applicationArguments);
 		}
 		catch (Throwable ex) {
@@ -327,6 +343,7 @@ public class SpringApplication {
 		}
 
 		try {
+			// 14. 发布事件
 			listeners.running(context);
 		}
 		catch (Throwable ex) {
@@ -402,6 +419,7 @@ public class SpringApplication {
 				// Not allowed in some environments.
 			}
 		}
+		// 【大名鼎鼎】refresh 方法
 		refresh(context);
 	}
 
@@ -570,6 +588,7 @@ public class SpringApplication {
 		if (contextClass == null) {
 			try {
 				switch (this.webApplicationType) {
+				// Servlet 容器则创建 AnnotationConfigServletWebServerApplicationContext
 				case SERVLET:
 					contextClass = Class.forName(DEFAULT_SERVLET_WEB_CONTEXT_CLASS);
 					break;

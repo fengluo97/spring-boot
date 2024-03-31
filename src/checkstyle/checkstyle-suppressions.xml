@@ -45,4 +45,7 @@
 	<suppress files="[\\/]spring-boot-docs[\\/]" checks="SpringJavadoc" message="\@since" />
 	<suppress files="[\\/]spring-boot-smoke-tests[\\/]" checks="SpringJavadoc" message="\@since" />
 	<suppress files="StringSequence" checks="SpringMethodVisibility" message="isEmpty"/>
+	
+	<suppress files="[\\/]spring-boot-learn[\\/]" checks=".*" />
+	<suppress files="[\\/]src[\\/]main[\\/]java[\\/]org[\\/]springframework[\\/]boot[\\/]learn[\\/]" checks=".*" />
 </suppressions>
